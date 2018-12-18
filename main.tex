@@ -1,0 +1,39 @@
+\documentclass[a4paper, twoside]{report}
+
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Sets page size and margins
+\usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+%% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\title{Building an Efficient DBMS by Generating OpenCL Code from Voodoo Vector Algebra}
+\author{Alexander Clarke \\ Qiang Feng \\ Mayeul Fournial \\ Pranav Kalidindi \\ Jordan Spooner \\ Laurence Squires}
+% Update supervisor and other title stuff in title/title.tex
+
+\begin{document}
+\input{title/title.tex}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\input{executive-summary/executive-summary.tex}
+\input{introduction/introduction.tex}
+\input{project-management/project-management.tex}
+\input{design-and-implementation/design-and-implementation.tex}
+\input{evaluation/evaluation.tex}
+\input{reflection/reflection.tex}
+
+\bibliographystyle{alpha}
+\bibliography{bibs/sample}
+
+\input{appendix/appendix.tex}
+\end{document}

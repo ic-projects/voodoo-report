@@ -1,0 +1,61 @@
+\chapter{Reflection and Future Extensions}
+
+\section{Significant technical challenges}
+
+1. Gaining initial understanding of the code, and in particular, the Voodoo API commands, understanding original architecture, getting it to compile, sparse documentation/testing...
+
+2. Using Calcite to generate API calls, involves traversing RexNodes etc, much more difficult than standard string-based approaches, not really done before (example)
+
+3. Using SWIG, difficulties with API and maintaining backward-compatibility, type information, Java/C++ memory issues...
+
+4. Using LibClang to build an AST (not really done before, as far as we are aware?)...
+
+5. Handling strange codegen edge-cases in the back-end (give example)
+
+Through these challenges we learned:
+
+1. How to navigate complex existing codebases
+
+2. How to manage technical debt and prioritise tasks in order to be able to demonstrate something impressive at the end of each iteration
+
+\section{Legal and ethical issues}
+
+Needs to be open-sourced -> implies understandable, easy to pick-up, use, contribute...
+
+- Dependency / licensing issues...
+
+Usefuleness:
+
+- Very brief discussion of how high-performance databases are used, how they might be helpful to some and harmful to others...
+
+\url{https://docs.google.com/document/d/10cTMsjru-TEgwY2nbnCN6L2P0eeM0OzeK3OvNSDzub0}:
+
+- Designed for usability: easy to setup and use for researchers, documented etc. (need to know SQL and linux)
+
+\url{https://docs.google.com/document/d/17c1YUBFDTNWwSnqsoz5ex1zbHZ30U1JQdMT_dVWceGQ}:
+
+- Security: dependencies, code may be buggy / poorly documented in places...
+
+- Reliability + support: dependencies, testing, documentation, issues
+
+\section{Areas for future improvement and extension}
+
+\subsection{Top-N queries}
+
+Difficulty of sorting / top-N on graphics cards (\url{http://anilshanbhag.in/static/papers/gputopk_sigmod18.pdf})
+
+\subsection{Storage manager and catalog}
+
+Voodoo doesn't have one... but it really should to be a proper DBMS...
+
+It might look like this...
+
+How this would affect the front end...
+
+\subsection{SWIG API design}
+
+Look at the design for SWIG API now...
+
+Difficulties this creates / measure coupling...
+
+We would propose to...

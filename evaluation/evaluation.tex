@@ -1,0 +1,53 @@
+\chapter{Evaluation}
+
+\section{Testing}
+
+Overall description of testing framework, how we tested difficult parts...
+
+Unit testing... coverage? (probably restricted to one particularly well-tested part of the codebase :P)...
+
+Integration testing...
+
+Dockerisation and CI...
+
+\section{Deliverables}
+
+We need to back all of these up with examples (demonstrate) or metrics (metric)...
+
+We can demonstrate how we have achieved our objectives and made it easier for researchers to use Voodoo...
+
+1. Formalised, well-documented installation process (docker, CI, readmes etc.)
+
+- Before: didn't compile, easily broken, now: provably builds (demonstrate)...
+
+- Before: lacking documentation, now: largely documented (demonstrate)...
+
+2. Calcite adapter allowing for arbitrary queries and schemas...
+
+- Before: hard-coded TPC-H schema, now: supports arbitrary schema with these types (demonstrate)...
+
+- Before: hard-coded int->query plan mapping, now: arbitrary SQL input with these commands, supporting JDBC (demonstrate)...
+
+- Support for these TPC-H queries (metric)
+
+- Support for these logical operators out of these possible ones (metric) + enumerable operators to plug the gap
+
+- Support for these row expressions out of these possible ones (metric)
+
+3. Cleaner, better-documented, easier to use implementation of Voodoo API based on ASTs...
+
+- Improve quality of implementation code (demonstrate/metric)
+
+- Easier to build upon (demonstrate)
+
+- Improve quality of generated code (demonstrate/metric)
+
+- Support for these TPC-H queries (metric)
+
+- Support for these Voodoo API calls out of these possible ones (metric)
+
+- (If we have time) benchmark performance not significantly worse? (metric)
+
+4. (Graphical web interface)
+
+- A way to demonstrate the overall architecture, and play around with it, that didn't exist before...
