@@ -1,3 +1,25 @@
 \chapter{Executive Summary}
 
-Elevator pitch...
+\paragraph{Background}
+
+Query performance in most popular relational databases is largely determined by CPU costs, and performance tends to be poor on modern CPUs as a result of poor locality and branch predictability.
+
+\emph{Voodoo} \cite{Pirk:2016:VVA:3007328.3007336} is a vector algebra which can be used as a easily optimisable intermediate representation for database queries. An existing database back-end using a Voodoo IR has been shown to generate highly efficient OpenCL code for queries, often outperforming existing state-of-the-art in-memory query processors.
+
+\paragraph{Problems}
+
+However, the existing implementation consisted of several disjoint components, and only supported queries in the TPC-H benchmark, whose plans were hardcoded into the driver program - i.e. it was not possible to run arbitrary queries. As such, it would be difficult for researchers to explore and use Voodoo.
+
+Furthermore, the code generation itself was complex and fragile, making it difficult for researchers to ensure its correctness, or extend the Voodoo kernel in any useful way.
+
+\paragraph{Achievements}
+
+We have made Voodoo more accessible to researchers, who will be able to set up and begin using Voodoo more easily. They can view the logical plan, Voodoo algebra and OpenCL code for an SQL query, as well as the results of its execution, using just a simple JDBC client.
+
+Additionally, researchers will find it easier to to maintain and extend Voodoo, as a result of the almost entirely new implementation of the Voodoo kernel we have written, which uses an AST to generate simpler, but in most cases, similarly efficient code.
+
+\paragraph{Applications}
+
+We expect the main users of our work to be researchers, who might want to use Voodoo to express optimisations for main-memory query processors. We believe we have made it easier for them to use and extend Voodoo.
+
+Of course, high-performance in-memory databases also have many applications in industry, and a database using a Voodoo IR could be particularly useful when query processing time is a major concern, such as in real-time or scientific applications. We have developed what is effectively a simple DBMS based on Voodoo algebra, which could form a strong starting-point for such a system.
