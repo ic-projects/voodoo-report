@@ -9,6 +9,38 @@ Should include discussion of technical challenges...
 \subsection{Architectural overview}
 
 Diagram...
+%\usetikzlibrary{shapes,arrows}
+\tikzstyle{decision} = [diamond, draw, fill=blue!20, 
+    text width=4.5em, text badly centered, node distance=3cm, inner sep=0pt]
+\tikzstyle{block} = [rectangle, draw, fill=blue!20, 
+    text width=5em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{line} = [draw, -latex']
+\tikzstyle{cloud} = [draw, ellipse,fill=red!20, node distance=3cm,
+    minimum height=2em]
+    
+\begin{tikzpicture}[node distance = 2cm, auto]
+    % Place nodes
+    \node [cloud] (sqlline) {SQL Line};
+    \node [cloud] (calcite) {Calcite};
+    \node [block] (init) {initialize model};
+    \node [cloud, left of=init] (expert) {expert};
+    \node [cloud, right of=init] (system) {system};
+    \node [block, below of=init] (identify) {identify candidate models};
+    \node [block, below of=identify] (evaluate) {evaluate candidate models};
+    \node [block, left of=evaluate, node distance=3cm] (update) {update model};
+    \node [decision, below of=evaluate] (decide) {is best candidate better?};
+    \node [block, below of=decide, node distance=3cm] (stop) {stop};
+    % Draw edges
+    \path [line] (init) -- (identify);
+    \path [line] (identify) -- (evaluate);
+    \path [line] (evaluate) -- (decide);
+    \path [line] (decide) -| node [near start] {yes} (update);
+    \path [line] (update) |- (identify);
+    \path [line] (decide) -- node {no}(stop);
+    \path [line,dashed] (expert) -- (init);
+    \path [line,dashed] (system) -- (init);
+    \path [line,dashed] (system) |- (evaluate);
+\end{tikzpicture}
 
 A full example query...
 
@@ -88,13 +120,15 @@ Rules are also used to convert all other operators, to avoid plans relying too h
 
 This is what SWIG is, how it works, and what it does (I guess \url{http://www.swig.org/Doc1.3/Java.html}?)...
 
-\subsection{LibClang}
+\subsection{Clang AST}
 
-This is what LibClang is, how it works, and what it does (I guess \url{https://clang.llvm.org/doxygen/group__CINDEX.html}?)...
+Clang AST (\url{https://clang.llvm.org/doxygen/}) is an abstract syntax tree that is designed to represent C++ but can also represent OpenCL (which is what it is used for in this project). Using it we can construct and modify our AST. Our AST can then be used to generate OpenCL code.
 
 \subsection{OpenCL}
 
 This is what OpenCL is, how it works, and what it does...
+
+OpenCL is a framework that allows for programming on to both GPUs and CPUs.
 
 (CUDA?)
 
@@ -167,19 +201,21 @@ Figure \ref{fig:web-interface} shows the main components of the web-interface. S
 \item A Vue.JS frontend, which uses CodeMirror to provide an editor with SQL syntax highlighting and autocompletion. Queries are sent to the API, and we parse the response, using a hierarchical depth-first search starting from the returned vector, to build up the list of nodes and edges in a connected graph of the plan. The distances from the returned vector are used to define the $y$-coordinates ("levels") of operator nodes in the final graph, and vis.js then calculates $x$-coordinates using a physics simulation with spring forces between nodes.
 \end{enumerate}
 
-\section{Generating OpenCL from Voodoo using LibClang}
+\section{Generating OpenCL from Voodoo using Clang AST}
 
-\subsection{Using LibClang to generate AST components}
+\subsection{Using Clang AST to generate AST components}
 
-We considered these options, and chose LibClang because...
+The intention of this side of the project was to replace string based code generation with an AST based system. Multiple options were considered for the code generation AST such as the multiple clang options (LibClang, Clang plugins, LibTooling and the Clang AST itself) CPPAst and building our own. We used the Clang AST itself as it provided the best utility for generating and producing code. As the Clang AST does not hold guarantees as to changes in future builds, we lock our LLVM version to 8.
 
 For each component, description of how it is represented...
 
 \subsection{Translating Voodoo to a Clang AST}
 
 Description of overall algorithm to convert voodoo -> clang ast...
+For each voodooo operator, different segments of the AST are generated to be later combined into fragments. These segments include the declaration of output variable, the statement to be put inside the for loop and any parameters to be included in the function declaration. These are returned in a ClangAstVector object, that also stores all of the vectors that it depends on, so that fragments can be constructed properly. 
 
 For each Voodoo API function, description of what it does and algorithm to convert it to AST...
+Many of the Voodoo API functions boil down to 
 
 \subsection{Generating and running OpenCL code}
 

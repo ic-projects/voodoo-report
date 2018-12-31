@@ -4,6 +4,71 @@
 
 Most of today's popular relational databases use a \emph{Volcano}-style iterator model \cite{Graefe:1994:VEP:627290.627558} for query processing. In this processing model, each operator (say, a projection, selection, join, etc.) produces a stream of tuples. The output stream of another operator is consumed using a simple interface, consisting only of the functions \texttt{open()}, \texttt{next()} and \texttt{close()}.
 
+\begin{figure}
+\centering
+\begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \begin{lstlisting}[language=SQL]
+SELECT
+  "c_nationkey",
+  COUNT("c_custkey")
+    AS "customers_in_debt"
+FROM
+  "customer"
+  JOIN "nation"
+    ON "c_nationkey" = "n_nationkey"
+WHERE
+  "c_acctbal" < 0 
+GROUP BY
+  "c_nationkey"
+    \end{lstlisting}
+    \caption{A simple SQL query}
+    \label{fig:simple-query}
+\end{subfigure}
+\begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \begin{overpic}[scale=0.205]{introduction/volcano.pdf}
+        \put(0, 0) {
+            \begin{tikzpicture}[nodes={draw, rectangle}, sibling distance=80pt, <-]
+                \node{$\Gamma_{\text{c\_nationkey}, (\text{c\_custkey}, \text{COUNT}, \text{in\_debt})}$}
+                    child{node{$\bowtie_{\text{c\_nationkey} = \text{n\_nationkey}}$}
+                        child{node{$\sigma_{\text{c\_acctbal} < 0}$}
+                            child{node{customer}}}
+                        child{node{nation}}};
+            \end{tikzpicture}
+        }
+    \end{overpic}
+    \caption{Evaluating \ref{fig:simple-query} using Volcano processing}
+    \label{fig:volcano-processing}
+\end{subfigure}
+\\[5ex]
+\begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \begin{tikzpicture}[nodes={draw, rectangle}, sibling distance=80pt, <-]
+        \node{$\Gamma_{\text{c\_nationkey}, (\text{c\_custkey}, \text{COUNT}, \text{in\_debt})}$}
+            child{node{$\bowtie_{\text{c\_nationkey} = \text{n\_nationkey}}$}
+                child{node{$\sigma_{\text{c\_acctbal} < 0}$}
+                    child{node{customer}}}
+                child{node{nation}}};
+    \end{tikzpicture}
+    \caption{Evaluating \ref{fig:simple-query} using bulk processing}
+    \label{fig:bulk-processing}
+\end{subfigure}
+\begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \begin{tikzpicture}[nodes={draw, rectangle}, sibling distance=80pt, <-]
+        \node{$\Gamma_{\text{c\_nationkey}, (\text{c\_custkey}, \text{COUNT}, \text{in\_debt})}$}
+            child{node{$\bowtie_{\text{c\_nationkey} = \text{n\_nationkey}}$}
+                child{node{$\sigma_{\text{c\_acctbal} < 0}$}
+                    child{node{customer}}}
+                child{node{nation}}};
+    \end{tikzpicture}
+    \caption{Evaluating \ref{fig:simple-query} using code generation}
+    \label{fig:code-generation}
+\end{subfigure}
+\caption{Approaches for improving query processing time}
+\end{figure}
+
 Whilst these databases benefit from a clean and flexible design which maximises maintainability and developer productivity, the Volcano-style processing model makes excessive use of function calls. For example, consider alone the \texttt{next()} call, which must be made for every tuple in the input, each intermediate result, and the final result. As main memory has grown, CPU costs now tend to be the query processing, and these function calls lead to frequent instruction mispredictions, and by extension control hazards, requiring CPU stalls which significantly degrade performance.
 
 Database systems such as \emph{MonetDB} \cite{Boncz:2008:BMW:1409360.1409380} pioneered a bulk-processing approach, in which instead of considering one tuple at a time, entire columns are considered at a time. By doing so, the cost of calling the next operator is amortised over the number of tuples. However, this approach introduces a new cost: intermediate results must now be materialised. Whilst the iterator-model can pipeline most operators (that is, the output of one operator can be passed directly to the input of the next), this is no longer possible with the bulk-processing model, which must make all resulting tuples accessible to the next operator to process at once. This often results in memory bandwidth constraining performance.
@@ -17,7 +82,7 @@ More recently, the \emph{HyPer} in-memory database system \cite{Neumann:2011:ECE
 Whilst benchmarks have shown that using Voodoo allows some of the fastest query processing times out of any modern approach, it was not really available in a form that made it easy to use:
 
 \begin{enumerate}
-    \item The existing Voodoo implementation was used as a replacement back-end for MonetDB. However the components to convert a query to a MonetDB plan and a MonetDB plan to Voodoo algebra remained mostly separate to the Voodoo kernel (code generator) itself, so there was no way to run queries, apart from TPC-H benchmarking queries whose plans / implementations were hard-coded into the driver program.
+    \item The existing Voodoo implementation was used as a replacement back-end for MonetDB. However the components to convert a query to a MonetDB plan and a MonetDB plan to Voodoo algebra remained mostly separate to the Voodoo kernel (code generator) itself, so there was no way to run queries, apart from TPC-H benchmarking queries whose plans were hard-coded into the driver program.
     \item The code generation itself was done by concatenating strings which formed the OpenCL program. This approach resulted in complex and fragile code, which was very difficult to extend. Importantly, once code had been written to the string, it became extremely difficult to change or move.
     \item Certain parts of the code also suffered from particularly sparse documentation, and several bugs which were identified during this project.
 \end{enumerate}
