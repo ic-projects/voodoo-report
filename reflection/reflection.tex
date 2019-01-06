@@ -2,60 +2,98 @@
 
 \section{Significant technical challenges}
 
-1. Gaining initial understanding of the code, and in particular, the Voodoo API commands, understanding original architecture, getting it to compile, sparse documentation/testing...
+\begin{enumerate}
+\item Gaining an initial understanding of the code. In particular, the various Voodoo API commands, the structure of the original architecture, achieving initial compilation and running of queries and implementing behaviour with sparse documentation and unclear testing.
+\item Using Calcite to generate API calls, involves traversing RexNodes etc, much more difficult than standard string-based approaches, not really done before (example)
+\item Using SWIG, difficulties with API and maintaining backward-compatibility, type information, Java/C++ memory issues...
+\item Using Clant AST for code generation and modification, which is not the intended purpose of the public Clang API. The clang tools page \url{https://clang.llvm.org/docs/Tooling.html} shows that Clang provides an API for traversing an AST and matching on specific nodes, however generation of the AST is not well documented. 
+\item Handling strange code generation edge-cases in the back-end due to relaxed definition of Voodoo algebra, for example nested and interleaved Cross or FoldSelect calls.
+\item Having a lot (like \textbf{a lot}) of spikes fail because by lack of documentation we have to try implementing stuff and see if it's the right way of doing things and running in lots of corners
+\end{enumerate}
 
-2. Using Calcite to generate API calls, involves traversing RexNodes etc, much more difficult than standard string-based approaches, not really done before (example)
+These challenges provided us with the chance to improve our ability to:
 
-3. Using SWIG, difficulties with API and maintaining backward-compatibility, type information, Java/C++ memory issues...
+\begin{enumerate}
+\item \emph{Navigate complex existing code-bases}. Voodoo has over 25,000 lines of C++ source code, and over 10,000 lines of tests. Apache Calcite, meanwhile, has over 300,000 lines of Java source code and over 100,000 lines of tests. Furthermore, both of these projects have a relatively complex architecture (based on concepts or research that we initially knew little to nothing about), large regions of code that are sparsely (if at all) documented, and several bugs. By the end of the project, we found that we had gained a deep understanding of these code-bases, the concepts behind them, and how to cleanly extend them. Through this process, we have significantly developed our skills in understanding and navigating complex existing code.
 
-4. Using Clant AST for code generation (not really done before, as far as we are aware?)...
+\item \emph{Manage technical debt}. Between each checkpoint, there were many things we could work on, but some were more useful than others, and some more difficult than others. There were occasionally even issues which completely blocked the entire team. As a result, we were forced to prioritise tasks in order to be able to demonstrate an improved product at the end of each iteration. Sometimes this involved taking on technical debt, by developing quick solutions that we knew were not extensible as they should have been. In order to keep development fast in general, we learned how to manage this technical debt and keep it at a reasonable level.
 
-5. Handling strange codegen edge-cases in the back-end (give example)
+%%%%%%% Mike integrated into points%%%%%%%
+\item \emph{Concile performance oriented code and best software engineering practices}. (Mike) \item you can't hack what you don't know
+\item MonetDB had moved in the years that the project remained idle which means that nothing that was given to us worked, we spent quite a considerable amount of time trying to get those to work (at least to get some reference implementation working which would help greatly) but although we fixed most surface problems and figured out MonetDB, the new behaviour introduced bugs deep into the existing Voodoo code that we are in no way capable of debugging, like finding a needle in 20,000 lines of C++!
+\item Sometimes things that exist have no value. if they are too cryptic, not documented, are are heavily coupled within, and written too specifically (like a spike code) then it's probably even best to not look at it because it'll only slow you down. Quote more on this: \emph{More is worse}\footnote{Freckle: Sometimes, more code means less features will come out of it. Those are expensive linen sheets.}
 
-Through these challenges we learned:
+Having pivoted to this project in the middle of Checkpoint 1, the most urgent priority was to get everyone started. We had to familiarise ourselves with the codebase and make it run on the different machines we would be using and this proved itself to be quite challenging and kept on being a challenge throughout the project.
 
-1. How to navigate complex existing codebases
-
-2. How to manage technical debt and prioritise tasks in order to be able to demonstrate something impressive at the end of each iteration
+[broken README, broken compilation, broken tests]... we had to make sure we'd leave the project in a state it'd be easy to modify/extend/install/work on etc:
+* Good technical documentation
+  * standard readme
+  * The appendix of this report that Holger wants about the technicalities of our implementation
+* Demonstrate by automation, testing etc.
+  * dockerfile
+  * continuous integration
+%%%%%%%%%%%%%% END MIKE %%%%%%%%%%%%%
+\end{enumerate}
 
 \section{Legal and ethical issues}
 
-Needs to be open-sourced -> implies understandable, easy to pick-up, use, contribute...
+Needs to be open-sourced -> proper recognition and references, easy to pick up, implies understandable, easy to pick-up, use, contribute...
 
 - Dependency / licensing issues...
 
-Usefuleness:
+\paragraph{Licensing}
 
-- Very brief discussion of how high-performance databases are used, how they might be helpful to some and harmful to others...
+The current plan is to open-source Voodoo, which would require us to [do certain things...]. Firstly, we must ensure that proper recognition and references for all dependencies that were used in our project - these can be seen in table \ref{table:dependencies}. In addition, 
 
-\url{https://docs.google.com/document/d/10cTMsjru-TEgwY2nbnCN6L2P0eeM0OzeK3OvNSDzub0}:
+\paragraph{Security}
 
-- Designed for usability: easy to setup and use for researchers, documented etc. (need to know SQL and linux)
+As the Voodoo database is currently tailored towards researchers, little  consideration has been taken towards security and vulnerability finding. Therefore, it is not intended for use in the public or on sensitive data as it is possible that numerous vulnerabilities exist in every layer of the Voodoo database.
 
-\url{https://docs.google.com/document/d/17c1YUBFDTNWwSnqsoz5ex1zbHZ30U1JQdMT_dVWceGQ}:
+Currently, the data relating to the contents of the database and current or past queries being executed can be leaked by the kernel. This would enable malicious attackers to leak sensitive or confidential data.
 
-- Security: dependencies, code may be buggy / poorly documented in places...
+It is also possible for attackers to crash the host computer if given access to running queries on the machine. The backend does not implement bounds checking and by crafting a query that results in an overflow in the OpenCL code it is possible to cause undefined behaviour in OpenCL. This may result in the host computer crashing.
 
-- Reliability + support: dependencies, testing, documentation, issues
+In addition, attackers could execute remote code on the host machine if given access to running queries on the machine. KeyPaths are used to access member elements of a vector. If an attacker is able to input a malicious KeyPath to the backend then they can inject arbitrary code into the generated OpenCL code. It may be possible to construct and pass a malicious KeyPath to the backend by crafting a specific query or database column name.
+
+\paragraph{Beneficiaries}
+
+Voodoo aspires to be the fastest database kernel in the world, which would be extremely beneficial to a variety of users, including:
+
+\begin{itemize}
+    \item The \textbf{general public}. In the future, Voodoo could be utilised in apps which require a database, hence data could be retrieved much quicker in certain circumstances, leading to an faster application which results in a better overall user experience. In addition, a more efficient database will lower the environmental impact of query operations, especially for certain cases which involve large scale data processing.
+    
+    \item \textbf{Researchers}, who can now use our project to view the generated OpenCL output of input SQL queries. They can now gain a better understanding of how certain SQL operators are translated into the Voodoo vector algebra, and how certain Voodoo operators are translated into OpenCL. They are therefore able to optimise the Voodoo algebra and the OpenCL code to improve the efficiency of queries.
+    
+    In addition, our project has made Voodoo more accessible, lowering the barrier for entry, and more appealing to researchers by making the setup process easy, ensuring that our Calcite adapter and Voodoo back-end implementation is well documented and has good code coverage (currently above 80\%).
+\end{itemize}
 
 \section{Areas for future improvement and extension}
 
+\subsection{Future possible research possibilities}
+
+Our supervisor told us future work was planned on Voodoo to study symbolic execution.
+
+Writing a physical optimiser for Voodoo, that would change the program to optimise a query for the number of cores in a GPU to partition an array, or adapt to installation of more memory to generate optimal voodoo code for the hardware and data.
+
+The back-end allows for different \texttt{VectorProcessor} to be implemented to allow queries to run in different environments that could benefit from the C-like AST Clang supports. For example, a processor could be created that loads and executes the fragment in a high performance C++ engine to make use of SMID instructions using parallel computation libraries and avoid the OpenCL overhead, or a CUDA engine at the cost of small modifications to the generated code.
+
+We only make use of one OpenCL device at the moment, but we could increase the degree of parallelism by using multiple devices at the same time (if the column don't entirely fit It would be probably be quite easy to run Use multiple OpenCL devices at the same time. or cross devices
+
 \subsection{Storage manager and catalog}
 
-Voodoo doesn't have one... but it really should to be a proper DBMS...
-
-It might look like this...
-
-How this would affect the front end...
+The front-end currently has bribes of a storage manager, it would need to be completed to be able to dynamically change schemas, and being able to update the storage. This would come with a better catalog to hold metadata about the tables and hardware that would be used by both the back-end and front-end and for example a Voodoo Algebra optimiser.
 
 \subsection{Top-N queries}
+\label{sub:top-n}
 
-Difficulty of sorting / top-N on graphics cards (\url{http://anilshanbhag.in/static/papers/gputopk_sigmod18.pdf})
+GPUs perform best on massively parallel operations. Selecting the top n from a list is a common requirement of a database kernel (like a \texttt{LIMIT} statement in SQL), however it is difficult to run efficiently in parallel. Top-n, is a large real world performance disadvantage for GPU based database kernels. Implementing an efficient parallel version of Top-n based on OpenCL would massively benefit the Voodoo kernel, even more since there has been recent positive results about it (\cite{Shanbhag:2018:ETQ:3183713.3183735})
 
-\subsection{SWIG API design}
+\subsection{Dynamic programming algorithm for creating fragments}
 
-Look at the design for SWIG API now...
+The current implementation of the fragment creation is a recursive algorithm. The problem of grouping statements together by the scope they belong to has an optimal substructure and there exists overlapping sub problems. An attempt has been made to convert the recursive solution into a dynamic programming solution. There is one case that our attempt does not handle. Appendix \ref{appendix:dpalgo} provides a more detailed explanation of this case and a possible solution. By converting the recursive algorithm ($\mathcal{O}(2^n)$ solution) to a dynamic programming algorithm ($\mathcal{O}(n^2)$ solution) would speed up the code generation process.
 
-Difficulties this creates / measure coupling...
+\subsection{Archive some of the existing code}
 
-We would propose to...
+Most of the original tests are failing, and various parts of the projects have fallen behind by not being updated regularly. Not only does it make the codebase lengthier, more confusing and harder to approach, it also contributes to most of the compilation time. Since coupling was very high in the original codebase bugs are hard to find and harder to fix. To ease adoption, we recommend selecting the bits that will be maintained and moving the rest out of the project.
+
+This would greatly make room for improving the design of the code and keeping coupling low, which is probably the biggest problem we had the overcome at the start. We suggest for example to use dependency injection with suitable abstractions in the SWIG API to give developers more room for extension. We could therefore create new channels of communication between front-end and back-end that make room for the extensions mentioned above like the catalog to fully help Voodoo turn into a full DBMS.

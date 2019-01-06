@@ -6,7 +6,7 @@ Query performance in most popular relational databases is largely determined by 
 
 \emph{Voodoo} \cite{Pirk:2016:VVA:3007328.3007336} is a vector algebra which can be used as a easily optimisable intermediate representation for database queries. An existing database back-end using a Voodoo IR has been shown to generate highly efficient OpenCL code for queries, often outperforming existing state-of-the-art in-memory query processors.
 
-\paragraph{Problems}
+\paragraph{Motivation}
 
 However, the existing implementation consisted of several disjoint components, and only supported queries in the TPC-H benchmark, whose plans were hardcoded into the driver program - i.e. it was not possible to run arbitrary queries. As such, it would be difficult for researchers to explore and use Voodoo.
 

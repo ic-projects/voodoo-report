@@ -14,14 +14,24 @@
 \usepackage{subcaption}
 \usepackage{listings}
 \usepackage{color}
+\usepackage{float}
 \lstset{basicstyle=\small\ttfamily,
     keywordstyle=\color{purple}}
 \usepackage{tikz}
-\usepackage[percent]{overpic}
+\usetikzlibrary{calc,positioning,shapes,arrows}
+\usepackage{tabularx}
+\newcolumntype{L}{>{\hsize=0.7\hsize\raggedright\arraybackslash}X}
+\newcolumntype{H}{>{\raggedright\arraybackslash}X}
+\def\arraystretch{1.2}
+\usepackage{booktabs}
 \usepackage[colorinlistoftodos]{todonotes}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{enumitem}
+\setlist[enumerate]{leftmargin=*}
 
-\title{Building an Efficient DBMS by Generating OpenCL Code from Voodoo Vector Algebra}
+
+
+\title{Building an Efficient Query Processor \\ by Generating OpenCL Code \\ from Voodoo Vector Algebra}
 \author{Alexander Clarke \\ Qiang Feng \\ Mayeul Fournial \\ Pranav Kalidindi \\ Jordan Spooner \\ Laurence Squires}
 % Update supervisor and other title stuff in title/title.tex
 
@@ -42,8 +52,8 @@ We would like to thank Holger Pirk for his continuous guidance and support. We w
 
 \input{executive-summary/executive-summary.tex}
 \input{introduction/introduction.tex}
-\input{design-and-implementation/design-and-implementation.tex}
 \input{project-management/project-management.tex}
+\input{design-and-implementation/design-and-implementation.tex}
 \input{evaluation/evaluation.tex}
 \input{reflection/reflection.tex}
 
