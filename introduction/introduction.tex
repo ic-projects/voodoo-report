@@ -4,9 +4,9 @@
 
 Most of today's popular relational databases use a \emph{Volcano}-style iterator model \cite{Graefe:1994:VEP:627290.627558} for query processing. In this processing model, each operator (say, a projection, selection, join, etc.) produces a stream of tuples. The output stream of another operator is consumed using a simple interface, consisting only of the functions \texttt{open()}, \texttt{next()} and \texttt{close()}. Figure \ref{fig:volcano-processing} demonstrates this approach.
 
-Whilst these databases benefit from a clean and flexible design which maximises maintainability and developer productivity, the Volcano-style processing model makes excessive use of function calls. For example, consider alone the \texttt{next()} call, which must be made for every tuple in the input, each intermediate result, and the final result. As main memory has grown, CPU costs now tend to be the query processing, and these function calls lead to frequent instruction mispredictions, and by extension control hazards, requiring CPU stalls which significantly degrade performance.
+Whilst these databases benefit from a clean and flexible design which maximises maintainability and developer productivity, the Volcano-style processing model makes excessive use of function calls. For example, consider alone the \texttt{next()} call, which must be made for every tuple in the input, each intermediate result, and the final result. As main memory has grown, it is now often the CPU which determines query processing performance, and these function calls lead to frequent instruction mispredictions, and by extension control hazards, requiring CPU stalls which significantly degrade performance.
 
-Database systems such as \emph{MonetDB} \cite{Boncz:2008:BMW:1409360.1409380} pioneered a bulk-processing approach, shown in figure \ref{fig:bulk-processing}, in which instead of considering one tuple at a time, entire columns are considered at a time. By doing so, the cost of calling the next operator is amortised over the number of tuples. However, this approach introduces a new cost: intermediate results must now be materialised. Whilst the iterator-model can pipeline most operators (that is, the output of one operator can be passed directly to the input of the next), this is no longer possible with the bulk-processing model, which must make all resulting tuples accessible to the next operator to process at once. This often results in memory bandwidth constraining performance.
+Database systems such as \emph{MonetDB} \cite{Boncz:2008:BMW:1409360.1409380} pioneered a bulk-processing approach, shown in figure \ref{fig:bulk-processing}, which, instead of considering one tuple at a time, considers entire columns at a time. The benefit of this approach is that the cost of calling the next operator is amortised over the number of tuples. However, it also introduces a new cost: intermediate results must now be materialised. Whilst the iterator-model can pipeline most operators (that is, the output of one operator can be passed directly to the input of the next), this is no longer possible with the bulk-processing model, which must make all resulting tuples accessible to the next operator to process at once. This often results in memory bandwidth constraining performance.
 
 In an attempt to solve this, a new query engine, \emph{X100} \cite{DBLP:conf/cidr/BonczZN05} (which later evolved into VectorWise), was built for MonetDB, which processes smaller (say 1000-value) vectors, which form chunks of columns. These vectors can fit in the CPU cache, and can be pipelined to avoid expensive materialisation.
 
@@ -71,7 +71,8 @@ Whilst benchmarks have shown that using Voodoo allows some of the fastest query 
 \begin{enumerate}
     \item The existing Voodoo implementation (detailed in \ref{original-voodoo-impl}) was a database \emph{kernel} meaning that it is far from being a full database management system.
     
-    It was used as a replacement back-end for MonetDB. However the components to convert a query to a MonetDB remained separate to the Voodoo kernel (code generator) itself, so there was no way to run queries, apart from TPC-H benchmarking queries whose plans were hard-coded into the driver program.
+    It was implemented as a replacement back-end for MonetDB. However the components to convert a query to a MonetDB plan remained separate to the Voodoo kernel itself, so there was no way to run queries, apart from TPC-H benchmarking queries, whose MonetDB plans were hard-coded into the driver program.
+    
     \item The code generation itself was done by concatenating strings which formed the OpenCL program. This approach resulted in complex and fragile code, which was very difficult to extend. Importantly, once code had been written to the string, it could not be altered anymore so the program could only be written from top to bottom. This led to some optimisation strategies for the generated code being difficult or impossible to implement. 
     \item Certain parts of the code also suffered from particularly sparse documentation, and several bugs which were identified during this project.
 \end{enumerate}
@@ -86,25 +87,25 @@ We broke these goals down into three concrete tasks:
 \begin{enumerate}
     \item \label{obj1} Build a front-end to firstly convert from an arbitrary SQL query (input by the end user) to a Calcite logical plan, and then from the logical plan to Voodoo vector algebra.
     \item \label{obj2} Create a new back-end that generates OpenCL code using an AST. The generated code should have an improved readability, and the back-end should be well tested and extensible.
-    \item \label{obj3} Make Voodoo open for modification, further research and a more sustainable project by ensuring we have sufficient documentation on all aspects of the project.
+    \item \label{obj3} Make Voodoo open for modification and further research by ensuring we have sufficient documentation on all aspects of the project.
 \end{enumerate}
 
 \section{Achievements}
 
 \begin{enumerate}
-    \item \textbf{Developed a Apache Calcite adapter for the Voodoo kernel}, which allows for any client to connect to the Voodoo via JDBC.
+    \item \textbf{Developed an Apache Calcite adapter for the Voodoo kernel}, which allows for any client to make queries using the Voodoo back-end via JDBC.
     
-    \item \textbf{Built a new implementation of the Voodoo kernel} that uses a \textbf{Clang AST to generate OpenCL code}.
+    \item \textbf{Built a new implementation of the Voodoo kernel} that uses a \textbf{Clang AST} to generate \textbf{cleaner OpenCL}.
 
-    \item Built in support for \textbf{arbitrary database schemas} with the following types: \texttt{BOOLEAN}, \texttt{CHAR}, \texttt{INTEGER}, \texttt{BIGINT}, \texttt{DECIMAL}, \texttt{DATE} and \texttt{STRING}.
+    \item Built in support for \textbf{arbitrary database schemas} using the following types: \texttt{BOOLEAN}, \texttt{CHAR}, \texttt{INTEGER}, \texttt{BIGINT}, \texttt{DECIMAL}, \texttt{DATE} and \texttt{STRING}.
     
     \item \textbf{Support rule based logical plan optimisations} using Apache Calcite.
     
-    \item \textbf{Formalised and automated the installation process} in a single \texttt{Dockerfile} which can serve as the installation script for all Calcite and Voodoo dependencies.
+    \item \textbf{Lowered the barrier to entry} to the project for developers and users.
     
-    \item Support \textbf{future extensions} for \textbf{generating C-like languages} such as CUDA and C++ by only small extensions to the existing back-end implementation through a generic processing class design.
+    \item Prepare \textbf{future extensions for generating C-like languages} such as CUDA and C++ using the Clang AST.
     
-    \item \textbf{Created a graphical web interface} which could be used for testing or educating about about the unconventional processing model of Voodoo, by showing intermediate representations when executing some SQL query.
+    \item \textbf{Created a graphical web interface} which could be used for testing or educating about the processing model of Voodoo, by showing intermediate representations when executing some SQL query.
 \end{enumerate}
 
 % 1. Document and formalise installation...

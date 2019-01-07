@@ -3,110 +3,47 @@
 \section{Deliverables}
 
 \begin{enumerate}
-    \item An \textbf{Apache Calcite adapter for the Voodoo kernel}, which allows for any client to connect to the Voodoo via JDBC.
+    \item An \textbf{Apache Calcite adapter for the Voodoo kernel}, which allows for any JDBC client to connect to the Voodoo back-end.
     
     Previously, the TPC-H schema was hard-coded into the database, and only the pre-defined TPC-H SQL queries can be run. We now support arbitrary database schemas with the following types: \texttt{BOOLEAN}, \texttt{CHAR}, \texttt{INTEGER}, \texttt{BIGINT}, \texttt{DECIMAL}, \texttt{DATE} and \texttt{STRING}. Furthermore, we also allow execution of arbitrary SQL queries. For example, our unit tests for data-types uses non-TPC-H schema and queries.
     
-    We currently support \texttt{TableScan}, \texttt{Project}, \texttt{Filter}, and in many cases we are also able to support \texttt{Aggregate} and \texttt{Join}. The only notable missing operation we do not support is \texttt{Sort}, but this can still be done through Calcite's \texttt{EnumerableSort} and not done in the Voodoo kernel. The same can be said about all other operators we do not support.
+    We currently support \texttt{TableScan}, \texttt{Project}, \texttt{Filter}, and in many cases we are also able to support \texttt{Aggregate} and \texttt{Join}. The only notable missing operation we do not support is \texttt{Sort}, but this can still be done through Calcite's \texttt{EnumerableSort} and is particularly difficult to do in the Voodoo kernel.
+    
+    By using Calcite, we are also able to include a \textbf{logical query optimiser}. We use a set of equivalence rules to optimise the Calcite logical plan that was generated from SQL.
     
     \item A \textbf{new implementation of the Voodoo kernel} that uses a \textbf{Clang AST to generate OpenCL code}. This implementation is less fragile and complex than the existing string-based implementation. This can be shown in the metrics we generated on the previous implementation and our new implementation - table \ref{table:original-metrics} shows that the cyclomatic complexity of the previous implementation is \textbf{1.86} on average with a maximum of \textbf{71}, whereas ours is \textbf{1.05} with a maximum of \textbf{24}.
     
-    In addition, our supervisor stated that our newly generated code was simpler and much nicer to work with when compared to the code generated in the old implementation, while performance remains roughly comparable to the previous implementation in most cases. We believe that it also significantly improves the extensibility of the Voodoo kernel.
+    In addition, it can be seen that our newly generated OpenCL code is simpler and much nicer to work with when compared to the code generated in the old implementation, while performance remains roughly comparable to the previous implementation in most cases. We believe that it also significantly improves the extensibility of the Voodoo kernel.
     
-    Finally, due to our generic class structure in the back-end, extending Voodoo to support the generation of C-like languages (such as CUDA and C++) can be achieved by small extensions to our back-end.
+    Finally, due to our generic class structure, extending Voodoo to support the generation of C-like languages (such as CUDA and C++) can be achieved by small extensions to our back-end.
     
-    \item A \textbf{usable product} with a low barrier to entry. We have formalised and automatically verify the installation process in a single \texttt{Dockerfile} that can serve as an install script for everything Calcite and Voodoo need. Furthermore we repeated and explained the installation steps in the README for better understanding and added support for Darwin systems. All this, along with the CI script file that document in detail the most up to date building and testing techniques and the CI log showing expected outputs, makes the project attractive to new comers and gives them more assurance to dive in deeper in it. 
+    \item A \textbf{usable product} with a \textbf{low barrier to entry} for users and developers. We have formalised and automatically verify the installation process in a single \texttt{Dockerfile} that can serve as an install script for everything Calcite and Voodoo need. Furthermore we repeated and explained the installation steps in the README for better understanding and added support for Darwin systems. All this, along with the CI script file that documents in detail the most up to date building and testing techniques and the CI log showing expected outputs, makes the project attractive to new comers and gives them more assurance to dive deeper in it. 
     
     The project encourages extension too, with more than 80\% code coverage for both the Calcite adapter and our new back-end implementation (further details in appendix \ref{appendix:metrics}) and should therefore be appealing to researchers who want to explore Voodoo.
-    
-    \item A \textbf{logical query optimiser}. We use equivalence rules to optimise the Calcite logical plan that was generated from SQL.
     
     \item A \textbf{graphical web interface} as a way to demonstrate the architecture of the Voodoo project. The interface can show the intermediate representations when executing some arbitrary SQL query on the TPC-H schema (the Calcite logical plan generated from SQL, the Voodoo vector algebra generated from the logical plan, and the OpenCL generated using the new implementation of the back-end). Previously, no such interface existed.
 \end{enumerate}
 
-% We need to back all of these up with examples (demonstrate) or metrics (metric)...
-
-% We can demonstrate how we have achieved our objectives and made it easier for researchers to use Voodoo...
-
-% 1. Formalised, well-documented installation process (docker, CI, readmes etc.)
-
-% - Before: didn't compile, easily broken, now: provably builds (demonstrate)...
-
-% - Before: lacking documentation, now: largely documented (demonstrate)...
-
-% 2. Calcite adapter allowing for arbitrary queries and schemas...
-
-% - Before: hard-coded TPC-H schema, now: supports arbitrary schema with these types (demonstrate)...
-
-% - Before: hard-coded int->query plan mapping, now: arbitrary SQL input with these commands, supporting JDBC (demonstrate)...
-
-% - Support for these TPC-H queries (metric)
-
-% - Support for these logical operators out of these possible ones (metric) + enumerable operators to plug the gap
-
-% - Support for these row expressions out of these possible ones (metric)
-
-% 3. Cleaner, better-documented, easier to use implementation of Voodoo API based on ASTs...
-
-% - Improve quality of implementation code (demonstrate/metric)
-
-% - Easier to build upon (demonstrate)
-
-% - Improve quality of generated code (demonstrate/metric)
-
-% - Support for these TPC-H queries (metric)
-
-% - Support for these Voodoo API calls out of these possible ones (metric)
-
-% - (If we have time) benchmark performance not significantly worse? (metric)
-
 \section{Testing}
 
-Overall description of testing framework, how we tested difficult parts... Description Of CI, Docker and how we run the tests
+\subsection{Continuous Integration}\label{sub:ci-testing}
 
-Since usability was at the centre of the 
-Ease of user understanding, extension of the project was at the centre of this project and something that was integrated at each step of this. Testing had to not only be just part of our development cycle, it would be we would deliver 
+Continuous integration was a major point we had to deliver on, and it was one of the trickiest points to maintain throughout the project, proving itself to be very time consuming - notably because of the time taken to build each project. We are running the CI in parallel using multiple containers created from an image built straight from a \texttt{Dockerfile} to ensure that it is always up to date. We originally used two different images for the \texttt{calcite} and \texttt{voodoo} repositories. This meant that extra deployment measures were in place, notably by publishing the SWIG library as a GitLab artifact\footnote{We needed to avoid publishing Voodoo publicly, that meant we couldn't use Maven's preferred solution: the public central repository.} from the master branch of the voodoo project to download in calcite. However, the use of a single Docker image from the \texttt{Dockerfile} made it possible to integrate \texttt{voodoo} as a \textit{submodule} of calcite, and to move the integration tests within the adapter package. Furthermore it made it easier to cache the SWIG bindings generated for the submodule commit along with the Maven dependencies and the relevant Calcite Maven modules, bringing down the building time (without tests) of the front-end down to 3 minutes for the adapter with \texttt{calcite-core} and LINQ4J. The caching and code design should also enforce that we can pull the latest bugfixes from the original calcite repository which is in active development, and also contribute to bugfixes as required by the Apache license.
 
-
-\subsection{Continuous Integration}
-
-Although continuous integration was a major point we had to deliver on, it was one of the trickiest one to maintain throughout the project and proved itself very time consuming, notably because of the time building each project takes. We are running the CI in parallel using multiple containers created from the original image. We originally used two different images for the calcite and voodoo repositories. This meant that extra deployment measures where at place, notably by publishing the SWIG library as a GitLab artifact\footnote{We needed to avoid publishing Voodoo publicly, that meant we couldn't use Maven's prefered solution which is the central repository.} from the master branch of the voodoo project to download from the calcite repository. 
-
-The use of the single vertical Docker image from the Dockerfile made it possible to integrate voodoo as a submodule of calcite, and to move the integration tests within the adapter package. Furthermore it is then easy to cache the SWIG bindings generated for the submodule commit along with the Maven dependencies and the relevant calcite Maven modules which brought the building time (without tests) of the front-end down to 3 minutes for the adapter with calcite-core and LINQ4J.
-
-The CI for calcite is very simple, the 3 targets for the SWIG bindings, the original \texttt{Driver} program, and the \texttt{runUnitTests} executable to run the \texttt{ClangAst} tests. We can note that it means our CI servers must have an OpenCl compatible device.
+The CI for the \texttt{voodoo} repository is much simpler, building 3 targets. First it builds the SWIG bindings and the original \texttt{Driver} program, then it builds the \texttt{runUnitTests} executable and runs the \texttt{ClangAst} tests in the pipeline. We can note that this implies our CI servers must have an OpenCL compatible device.
 
 \subsection{Back-end}
 
-Initially, test cases for each TPCH query were present, however the majority of tests executed with exceptions or failed to assert any conditions. We have implemented small feature tests for Voodoo operators like \texttt{CrossTest}, \texttt{foldSumTest}. These tests execute a minimal hand written query on a minimal dataset and check for correct behaviour of the specified operator. In addition, tests for TPCH Q6, Q19 and Q1 have been generated by the front end and translated into a test case, operating on a minimal data set and checking for correct output based on the original SQL query. Finally to help us come up with correct fragment resolution algorithms we used tests for important parts of the algortihms and edge cases (like \texttt{CanMergeDepedentFragments}, \texttt{CanMergeIndependentFragmentsFromMultipleTables}, etc.). 
+Initially, test cases for each TPC-H query were present, however the majority of tests executed with exceptions or failed to assert any conditions. We have implemented small feature tests for Voodoo operators like \texttt{CrossTest}, \texttt{foldSumTest}. These tests execute a minimal hand written query on a minimal dataset and checks for correct behaviour of the specified operator. In addition, tests for TPCH Q6, Q19 and Q1 have been generated by the front end and translated into a test case, operating on a minimal data set and checking for correct output based on the original SQL query. Finally, to help us come up with correct block resolution algorithms, we used tests for important parts of the algorithms and edge cases (like \texttt{CanMergeDepedentFragments}, \texttt{CanMergeIndependentFragmentsFromMultipleTables}, etc.). 
 
-The overall code coverage of 82\% with further details given in appendix \ref{appendix:metrics}. This result is notably brought down by having some voodoo operators not being implemented and therefore not tested, specific requirements for SWIG (like explicit default constructors and destructors, which do not represent features to test), and glue code called in the integration tests only which are not shown in either test coverage report. However, this is a great improvement compared to the original code, notably since those tests are feature oriented and tailored to fail on specific parts which should help beginners on the project to extend the code safely. This makes the codebase more friendly to contribution from other researchers, one of the major objectives of this project.
+The overall code coverage is 82\% - further details can be found in appendix \ref{appendix:metrics}. This result is notably brought down by having some voodoo operators not being implemented (and therefore not tested), specific requirements for SWIG (like explicit default constructors and destructors, which do not represent features to test), and glue code only called in the integration tests, which are not shown in either test coverage reports. However, this is a great improvement compared to the original code, notably since those tests are feature oriented and tailored to fail on specific parts which should help beginners on the project to extend the code safely. This makes the codebase more friendly to contribution from other researchers - one of the major objectives for this project.
 
 \subsection{Front-end}
 
-We have those kind of test....
+The front-end fully follows Apache's code standards. During the build process, Maven automatically runs a variety of linters, tests, and other checks. The most important three are:
 
-
-\subsection{Rename this section?}
-
-We have already talked about the technical details and what they've achieved for both objectives \ref{obj1} and \ref{obj2}
-
-A main objective (\ref{obj3}) for this project was to make Voodoo accessible, we brought in lots of new components that were potentially dangerous for that but we lowered the difficulty and thing:
-
-Main problem being documentation (or lack of) for all the technology we use:
-
-\begin{enumerate}
-    \item Make familiar wrappers around clangAst because the doxygens are simply yuck
-    \item Calcite's documentation is mostly just Javadocs and most things in the repo are quite obscure/experimental $\rightarrow$ we use only the most stable parts of calcite, make use of familiar Java patterns (\texttt{XXXFactory}, singleton for the API ;))) soon, ); make sure we can always pull from upstream to be latest bug fixes (calcite is in active development and constant expansion) by sticking to Apache's maven;s conventions, as hard as it is and not modifying existing code to avoid conflicts.
-    \item This report will hold documentation for the back-end. it was written in a way that is extensible with reusable components with low coupling which was the major problem before
-\end{enumerate}
-
-\subsubsection{Diversity requirements for users (TODO dat)}
-
-We provide extensive documentation to allow users to install and use Voodoo on any Unix-based systems. In addition, the documentation for 3rd party products required or used by Voodoo also support Unix-based systems.
-
-We have taken some technology decisions to support equality. Currently the front-end can easily be replaced with one that an international users might use or are familiar with, since all that is required is an SQL client which can connect to our Calcite Voodoo adapter through JDBC, or using Avatica to build an ODBC driver.
-
-Our documentation is currently in English, and there are 3rd party products which are only documented in English. However, it is the responsibility of the 3rd party owners to translate their documentation, and we can easily generate further translations using e.g. Google Translation.
-
-Our product is mainly focused towards researchers, to allow them to experiment with generating Voodoo code. The subsection of users who can contribute and work on the project is restricted by our language choices. Those familiar with SQL and the languages used to build the product (Java, C/C++) should be able to work on and improve the project. As the front-end and back-end are separate repositories and systems, this does allow users to focus on only one side and therefore removes some of the language knowledge required to contribute to Voodoo.
+\begin{itemize}
+    \item \textbf{Checkstyle}. This stage ensures that our code style matches Apache's coding standards, and checks for the existence of JavaDoc, as well as for correct import ordering, and consistent code formatting.
+    \item \textbf{Forbidden APIs}. This checks for dangerous method calls, i.e. those that are known to often trip up developers and lead to bugs.
+    \item \textbf{Package tests}. Maven also runs our test suites. We run integration tests to check that we are able to communicate with the back-end as expected. On top of this, we run a suite of "unit-like" tests, testing individual features, such as support for certain types or operator cases. Additionally, we have a suite of TPC-H tests, which do more substantial processing. These tests usually set up a connection to our front-end, run a query, and check the plan and the result set are correct. As can be seen in appendix \ref{appendix:metrics}, we achieve over 80\% test coverage in the front-end. Almost all untested methods are methods required by an interface that we do not fully implement.
+\end{itemize}
